@@ -1,37 +1,36 @@
-# 这是一个github action的配置文件，用于调用AI语言模型，生成一段笑话，并写入到README.md文件中
-# 代码的逻辑是：
-# 1. 每分钟触发一次workflow，使用ChatGLM-2模型生成一段笑话
-# 2. 将当前的日期和时间，格式是YYYY-MM-DD HH:MM，和生成的笑话写入到README.md文件的开头，用换行符分隔
+name: main
 
-name: Joke Generator # workflow的名字
 on:
   schedule:
-    - cron: '* * * * *' # 每分钟触发一次
+    - cron: '0-30/20 8-16 * * *' # 在每小时的8-16分，每20分钟运行一次
+    - cron: '0-60/60 17 * * *' # 在17点的0-60分，每60分钟运行一次
+
 jobs:
-  joke: # 任务的名字
-    runs-on: ubuntu-latest # 运行的环境
+  update-readme:
+    runs-on: ubuntu-latest # 运行环境是Ubuntu
     steps:
-      - name: Checkout # 拉取代码
-        uses: actions/checkout@v3
-      - name: Generate Joke # 生成笑话
-        id: joke # 任务的id，用于后面引用
-        run: | # 运行的命令
-          # 调用ChatGLM-2模型，生成一段笑话，保存到变量joke中
-          # 这里使用了curl命令，假设ChatGLM-2模型有一个公开的API接口，可以通过POST请求获取生成的内容
-          # API接口的地址是https://chatglm-2.com/api/generate，请求的参数是{"prompt": "Tell me a joke"}
-          # 响应的内容是一个JSON字符串，包含一个key为"joke"的字段，值为生成的笑话
-          joke=$(curl -X POST https://chatglm-2.com/api/generate -d '{"prompt": "Tell me a joke"}' | jq -r '.joke')
-          # 将变量joke的值输出到标准输出，用于打印和后面引用
-          echo "::set-output name=joke::$joke"
-      - name: Write to README.md # 写入到README.md文件中
-        run: | # 运行的命令
-          # 获取当前的日期和时间，格式是YYYY-MM-DD HH:MM，保存到变量datetime中
-          datetime=$(date +"%Y-%m-%d %H:%M")
-          # 将当前时间和生成的笑话写入到README.md文件的开头，用换行符分隔
-          echo -e "$datetime\n${{ steps.joke.outputs.joke }}\n\n$(cat README.md)" > README.md
-          # 将修改后的文件提交到github仓库中，使用actions用户和邮箱，提交信息为"Update README.md"
-          git config --local user.email "10017116@qq.com"
-          git config --local user.name "gaoyundl1"
+      - name: Check out repository code # 拉取仓库代码
+        uses: actions/checkout@v2
+      - name: Update README # 更新README文件
+        run: |
+          # 生成一个20-30的随机数
+          MINUTES=$((RANDOM % 11 + 20))
+          # 计算下一次运行的时间
+          NEXT=$(date -d "+$MINUTES minutes" '+%Y-%m-%d %H:%M:%S')
+          # 生成当前年月日和时间
+          DATE=$(date '+%Y-%m-%d %H:%M:%S')
+          # 读取README文件的内容
+          CONTENT=$(cat README.md)
+          # 只保留最新的三行
+          LINES=$(echo "$CONTENT" | head -n 3)
+          # 在第一行插入当前日期和时间
+          echo "$DATE" > README.md
+          echo "$LINES" >> README.md
+          # 在最后一行插入下一次运行的时间
+          echo "Next update: $NEXT" >> README.md
+          # 提交更改
+          git config --global user.name 'gaoyundl1'
+          git config --global user.email '10017116@qq.com'
           git add README.md
-          git commit -m "Update README.md"
+          git commit -m "Update README"
           git push
