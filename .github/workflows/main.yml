@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest # 运行的环境
     steps:
       - name: Checkout # 拉取代码
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Generate Joke # 生成笑话
         id: joke # 任务的id，用于后面引用
         run: | # 运行的命令
