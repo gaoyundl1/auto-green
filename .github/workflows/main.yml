@@ -1,89 +1,50 @@
-# 导入requests库，用于发送http请求
-import requests
+# 这是一个github action的配置文件，用于调用AI语言模型，生成一段笑话，并写入到README.md文件中
+# 代码的逻辑是：
+# 1. 每分钟触发一次workflow，使用ChatGLM-2模型生成一段笑话
+# 2. 如果当前时间是上午9点到下午5点之间，且距离上次写入的时间超过了30到40分钟的随机数，就将生成的笑话写入到README.md文件中，格式是第一行年月日加时间，从第二行开始为生成的内容
+# 3. 如果当前时间不是上午9点到下午5点之间，就不写入文件，只打印生成的笑话
 
-# 定义一个函数，用于抓取知乎搜索前三的新闻
-def fetch_zhihu_news():
-    # 定义一个搜索关键词，可以根据需要修改
-    keyword = "新闻"
-    # 定义一个请求头，用于模拟浏览器访问
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
-    }
-    # 定义一个请求参数，用于指定搜索类型和排序方式
-    params = {
-        "type": "content",
-        "q": keyword,
-        "sort": "upvote"
-    }
-    # 发送get请求，获取搜索结果页面
-    response = requests.get("https://www.zhihu.com/search", headers=headers, params=params)
-    # 判断响应状态码是否为200，表示请求成功
-    if response.status_code == 200:
-        # 从响应中提取json数据
-        data = response.json()
-        # 从json数据中提取搜索结果列表
-        items = data["data"]
-        # 定义一个空列表，用于存储抓取到的新闻
-        news = []
-        # 遍历搜索结果列表，取前三个
-        for item in items[:3]:
-            # 判断搜索结果的类型是否为文章，表示是新闻
-            if item["type"] == "article":
-                # 从搜索结果中提取文章的标题和链接
-                title = item["highlight"]["title"]
-                url = item["object"]["url"]
-                # 将标题和链接拼接成一行，添加到新闻列表中
-                news.append(f"{title} {url}")
-        # 返回新闻列表
-        return news
-    else:
-        # 如果请求失败，返回空列表
-        return []
-
-# 定义一个函数，用于将抓取到的新闻写入到README.md文件中
-def write_to_readme(news):
-    # 打开README.md文件，以追加模式
-    with open("README.md", "a") as f:
-        # 导入datetime库，用于获取当前的日期和时间
-        from datetime import datetime
-        # 获取当前的日期和时间，格式化为年月日时分秒
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # 写入第一行，为日期和时间
-        f.write(f"{now}\n")
-        # 遍历新闻列表，写入每一行，为抓取到的内容
-        for item in news:
-            f.write(f"{item}\n")
-        # 写入一个空行，用于分隔不同的抓取结果
-        f.write("\n")
-
-# 调用抓取知乎新闻的函数，获取新闻列表
-news = fetch_zhihu_news()
-# 调用写入README.md文件的函数，传入新闻列表
-write_to_readme(news)
-
-# 以下是注释代码，每天上午9点-下午5点，间隔30-40分钟抓取一次，等正式运行时使用
-# 导入schedule库，用于定时任务
-# import schedule
-# 导入time库，用于延时
-# import time
-# 导入random库，用于生成随机数
-# import random
-
-# 定义一个函数，用于执行抓取和写入的任务
-# def job():
-#     news = fetch_zhihu_news()
-#     write_to_readme(news)
-
-# 定义一个函数，用于生成随机的间隔时间，单位为分钟
-# def random_interval():
-#     return random.randint(30, 40)
-
-# 使用schedule库，设置每天的9点到17点，每隔随机时间，执行一次任务
-# schedule.every().day.at("09:00").until("17:00").do(job).tag("zhihu_news")
-
-# 使用一个无限循环，不断检查和执行任务
-# while True:
-#     # 运行所有的任务
-#     schedule.run_pending()
-#     # 延时一秒
-#     time.sleep(1)
+name: Joke Generator # workflow的名字
+on:
+  schedule:
+    - cron: '* * * * *' # 每分钟触发一次
+jobs:
+  joke: # 任务的名字
+    runs-on: ubuntu-latest # 运行的环境
+    steps:
+      - name: Checkout # 拉取代码
+        uses: actions/checkout@v2
+      - name: Generate Joke # 生成笑话
+        id: joke # 任务的id，用于后面引用
+        run: | # 运行的命令
+          # 调用ChatGLM-2模型，生成一段笑话，保存到变量joke中
+          # 这里使用了curl命令，假设ChatGLM-2模型有一个公开的API接口，可以通过POST请求获取生成的内容
+          # API接口的地址是https://chatglm-2.com/api/generate，请求的参数是{"prompt": "Tell me a joke"}
+          # 响应的内容是一个JSON字符串，包含一个key为"joke"的字段，值为生成的笑话
+          joke=$(curl -X POST https://chatglm-2.com/api/generate -d '{"prompt": "Tell me a joke"}' | jq -r '.joke')
+          # 将变量joke的值输出到标准输出，用于打印和后面引用
+          echo "::set-output name=joke::$joke"
+      - name: Write to README.md # 写入到README.md文件中
+        run: | # 运行的命令
+          # 获取当前的日期和时间，格式是YYYY-MM-DD HH:MM，保存到变量datetime中
+          datetime=$(date +"%Y-%m-%d %H:%M")
+          # 获取上次写入文件的时间，保存到变量lasttime中，如果文件不存在或没有记录时间，就赋值为0
+          lasttime=$(cat README.md | head -n 1 | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}') || lasttime=0
+          # 计算当前时间和上次写入时间的差值，单位是秒，保存到变量diff中
+          diff=$(($(date -d "$datetime" +%s) - $(date -d "$lasttime" +%s)))
+          # 生成一个30到40之间的随机数，单位是分钟，保存到变量interval中
+          interval=$(shuf -i 30-40 -n 1)
+          # 判断当前时间是否是上午9点到下午5点之间，如果是，就继续执行，如果不是，就退出
+          if [[ $(date +"%H") -ge 9 && $(date +"%H") -lt 17 ]]; then
+            # 判断差值是否大于等于随机数乘以60，即是否超过了间隔时间，如果是，就继续执行，如果不是，就退出
+            if [[ $diff -ge $(($interval * 60)) ]]; then
+              # 将当前时间和生成的笑话写入到README.md文件的开头，用换行符分隔
+              echo -e "$datetime\n${{ steps.joke.outputs.joke }}\n\n$(cat README.md)" > README.md
+              # 将修改后的文件提交到github仓库中，使用actions用户和邮箱，提交信息为"Update README.md"
+              git config --local user.email "10017116@qq.com"
+              git config --local user.name "gaoyundl1"
+              git add README.md
+              git commit -m "Update README.md"
+              git push
+            fi
+          fi
