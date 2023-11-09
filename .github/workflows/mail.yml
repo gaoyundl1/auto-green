@@ -1,0 +1,89 @@
+# 导入requests库，用于发送http请求
+import requests
+
+# 定义一个函数，用于抓取知乎搜索前三的新闻
+def fetch_zhihu_news():
+    # 定义一个搜索关键词，可以根据需要修改
+    keyword = "新闻"
+    # 定义一个请求头，用于模拟浏览器访问
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36"
+    }
+    # 定义一个请求参数，用于指定搜索类型和排序方式
+    params = {
+        "type": "content",
+        "q": keyword,
+        "sort": "upvote"
+    }
+    # 发送get请求，获取搜索结果页面
+    response = requests.get("https://www.zhihu.com/search", headers=headers, params=params)
+    # 判断响应状态码是否为200，表示请求成功
+    if response.status_code == 200:
+        # 从响应中提取json数据
+        data = response.json()
+        # 从json数据中提取搜索结果列表
+        items = data["data"]
+        # 定义一个空列表，用于存储抓取到的新闻
+        news = []
+        # 遍历搜索结果列表，取前三个
+        for item in items[:3]:
+            # 判断搜索结果的类型是否为文章，表示是新闻
+            if item["type"] == "article":
+                # 从搜索结果中提取文章的标题和链接
+                title = item["highlight"]["title"]
+                url = item["object"]["url"]
+                # 将标题和链接拼接成一行，添加到新闻列表中
+                news.append(f"{title} {url}")
+        # 返回新闻列表
+        return news
+    else:
+        # 如果请求失败，返回空列表
+        return []
+
+# 定义一个函数，用于将抓取到的新闻写入到README.md文件中
+def write_to_readme(news):
+    # 打开README.md文件，以追加模式
+    with open("README.md", "a") as f:
+        # 导入datetime库，用于获取当前的日期和时间
+        from datetime import datetime
+        # 获取当前的日期和时间，格式化为年月日时分秒
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 写入第一行，为日期和时间
+        f.write(f"{now}\n")
+        # 遍历新闻列表，写入每一行，为抓取到的内容
+        for item in news:
+            f.write(f"{item}\n")
+        # 写入一个空行，用于分隔不同的抓取结果
+        f.write("\n")
+
+# 调用抓取知乎新闻的函数，获取新闻列表
+news = fetch_zhihu_news()
+# 调用写入README.md文件的函数，传入新闻列表
+write_to_readme(news)
+
+# 以下是注释代码，每天上午9点-下午5点，间隔30-40分钟抓取一次，等正式运行时使用
+# 导入schedule库，用于定时任务
+# import schedule
+# 导入time库，用于延时
+# import time
+# 导入random库，用于生成随机数
+# import random
+
+# 定义一个函数，用于执行抓取和写入的任务
+# def job():
+#     news = fetch_zhihu_news()
+#     write_to_readme(news)
+
+# 定义一个函数，用于生成随机的间隔时间，单位为分钟
+# def random_interval():
+#     return random.randint(30, 40)
+
+# 使用schedule库，设置每天的9点到17点，每隔随机时间，执行一次任务
+# schedule.every().day.at("09:00").until("17:00").do(job).tag("zhihu_news")
+
+# 使用一个无限循环，不断检查和执行任务
+# while True:
+#     # 运行所有的任务
+#     schedule.run_pending()
+#     # 延时一秒
+#     time.sleep(1)
