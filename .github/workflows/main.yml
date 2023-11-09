@@ -24,7 +24,7 @@ jobs:
           # 只保留最新的三行
           LINES=$(echo "$CONTENT" | head -n 3)
           # 在第一行插入当前日期和时间，并加上两行回车
-          echo "$DATE  \n\n" > README.md
+          echo "$DATE\n\n  " > README.md
           echo "$LINES" >> README.md
           # 在最后一行插入下一次运行的时间
           echo "Next update: $NEXT" >> README.md
