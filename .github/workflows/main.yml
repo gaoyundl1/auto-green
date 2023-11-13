@@ -2,35 +2,21 @@ name: main
 
 on:
   schedule:
-    - cron: '0-30/20 8-16 * * *' # 在每小时的8-16分，每20分钟运行一次
-    - cron: '0-30/30 17 * * *' # 在17点的0-30分，每30分钟运行一次
+    - cron: '0 10 * * *'
 
 jobs:
-  update-readme:
-    runs-on: ubuntu-latest # 运行环境是Ubuntu
+  generate_log:
+    runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code # 拉取仓库代码
-        uses: actions/checkout@v2
-      - name: Update README # 更新README文件
+      - name: Generate log file
         run: |
-          # 生成一个20-30的随机数
-          MINUTES=$((RANDOM % 11 + 20))
-          # 计算下一次运行的时间
-          NEXT=$(date -d "+$MINUTES minutes" '+%Y-%m-%d %H:%M:%S')
-          # 生成当前年月日和时间
-          DATE=$(date '+%Y-%m-%d %H:%M:%S')
-          # 读取README文件的内容
-          CONTENT=$(cat README.md)
-          # 只保留最新的三行
-          LINES=$(echo "$CONTENT" | head -n 3)
-          # 在第一行插入当前日期和时间，并加上两行回车
-          echo "$DATE\n\n  " > README.md
-          echo "$LINES" >> README.md
-          # 在最后一行插入下一次运行的时间
-          echo "Next update: $NEXT" >> README.md
-          # 提交更改
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git add README.md
-          git commit -m "Update README"
-          git push
+          date=$(date '+%Y%m%d')
+          touch "$date.txt"
+          echo "$date" >> "$date.txt"
+      - name: Add current time to log file
+        id: add_time
+        run: |
+          while true; do
+            sleep ${{ random.int(1200, 1800) }} # sleep for 20-30 minutes (in seconds)
+            echo "$(date '+%Y-%m-%d %H:%M:%S')" >> "$date.txt"
+          done
