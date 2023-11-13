@@ -2,7 +2,7 @@ name: main
 
 on:
   schedule:
-    - cron: '0 10 * * *'
+    - cron: '0 12 * * *'
 
 jobs:
   generate_log:
@@ -17,6 +17,7 @@ jobs:
         id: add_time
         run: |
           while true; do
-            sleep ${{ random.int(1200, 1800) }} # sleep for 20-30 minutes (in seconds)
+            sleep=$(( (RANDOM % 1800) + 1200 )) # generate random number between 1200 and 1800
+            sleep $sleep
             echo "$(date '+%Y-%m-%d %H:%M:%S')" >> "$date.txt"
           done
