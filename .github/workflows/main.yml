@@ -1,23 +1,17 @@
-name: main
-
 on:
   schedule:
-    - cron: '0 12 * * *'
+    - cron: '* */10 * * *'  # every ten minutes, starting at the top of the hour
 
 jobs:
-  generate_log:
+  log_date:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate log file
+      - name: Record Current Date
         run: |
           date=$(date '+%Y%m%d')
           touch "$date.txt"
           echo "$date" >> "$date.txt"
-      - name: Add current time to log file
-        id: add_time
+      - name: Record Current Time
         run: |
-          while true; do
-            sleep=$(( (RANDOM % 1800) + 1200 )) # generate random number between 1200 and 1800
-            sleep $sleep
-            echo "$(date '+%Y-%m-%d %H:%M:%S')" >> "$date.txt"
-          done
+          sleep $(( (RANDOM % 1800) + 1200 ))
+          echo "$(date '+%Y-%m-%d %H:%M:%S')" >> "$date.txt"
