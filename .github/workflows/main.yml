@@ -1,17 +1,25 @@
+name: main
+
 on:
   schedule:
-    - cron: '* */10 * * *'  # every ten minutes, starting at the top of the hour
+    - cron: '0-30/27 8-17 * * *'
 
 jobs:
-  log_date:
+  update-readme:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Record Current Date
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get current time
+        run: date > current_time.txt
+
+      - name: Add current time to README
         run: |
-          date=$(date '+%Y%m%d')
-          touch "$date.txt"
-          echo "$date" >> "$date.txt"
-      - name: Record Current Time
-        run: |
-          sleep $(( (RANDOM % 1800) + 1200 ))
-          echo "$(date '+%Y-%m-%d %H:%M:%S')" >> "$date.txt"
+          echo "Current Time: $(cat current_time.txt)" >> README.md
+          git config --local user.name "gaoyundl1"
+          git config --local user.email "10017116@qq.com"
+          git add README.md
+          git commit -m "Update README with current time"
+          git push
